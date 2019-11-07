@@ -22,9 +22,9 @@ import io.reactivex.schedulers.Schedulers;
 import static com.example.tmdbaudio.network.RetrofitService.getApiService;
 
 public class AlbumViewModel extends AndroidViewModel {
-    public MutableLiveData<List<Album>> albunsLiveData = new MutableLiveData<>();
-    MutableLiveData<String> albunsLiveDataError = new MutableLiveData<>();
-    public MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
+    private MutableLiveData<List<Album>> albunsLiveData = new MutableLiveData<>();
+    private MutableLiveData<String> albunsLiveDataError = new MutableLiveData<>();
+    private MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private CompositeDisposable disposable = new CompositeDisposable();
 
     public AlbumViewModel(@NonNull Application application) {
