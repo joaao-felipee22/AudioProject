@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         viewModel.getAlbuns(bandName);
 
         viewModel.getAlbumLiveData().observe(this, (List<Album> albuns) -> {
-            if (!albuns.isEmpty()){
+            if (albuns != null && !albuns.isEmpty()){
                 adapter.setUpdate(albuns);
             }else{
                 Snackbar.make(searchView,"Album não encontrado", Snackbar.LENGTH_LONG);
