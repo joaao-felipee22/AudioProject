@@ -32,7 +32,7 @@ public class RecyclerViewAdapater extends RecyclerView.Adapter<RecyclerViewAdapa
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Album album = albums.get(position);
+        Album album = this.albums.get(position);
         holder.bind(album);
     }
 

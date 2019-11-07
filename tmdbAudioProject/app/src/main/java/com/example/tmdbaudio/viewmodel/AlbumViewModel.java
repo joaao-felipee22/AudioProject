@@ -23,7 +23,7 @@ import static com.example.tmdbaudio.network.RetrofitService.getApiService;
 
 public class AlbumViewModel extends AndroidViewModel {
     public MutableLiveData<List<Album>> albunsLiveData = new MutableLiveData<>();
-    MutableLiveData<Throwable> albunsLiveDataError = new MutableLiveData<>();
+    MutableLiveData<String> albunsLiveDataError = new MutableLiveData<>();
     public MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private CompositeDisposable disposable = new CompositeDisposable();
 
@@ -33,6 +33,10 @@ public class AlbumViewModel extends AndroidViewModel {
 
     public LiveData<List<Album>> getAlbumLiveData() {
         return albunsLiveData;
+    }
+
+    public LiveData<String> getErrorAlbum(){
+        return this.albunsLiveDataError;
     }
 
     public void getAlbuns(String artista) {
@@ -52,7 +56,7 @@ public class AlbumViewModel extends AndroidViewModel {
                                     albunsLiveData.setValue(artistaResponse.getAlbum());
                                 }
                                 , throwable -> {
-                                    Log.i("LOG", "Error: " + throwable.getMessage());
+                                    albunsLiveDataError.setValue(throwable.getMessage());
                                 })
 
         );
