@@ -30,6 +30,9 @@ public class AlbumViewModel extends AndroidViewModel {
     public AlbumViewModel(@NonNull Application application) {
         super(application);
     }
+    public LiveData<Boolean> isLoading(){
+        return this.isLoading;
+    }
 
     public LiveData<List<Album>> getAlbumLiveData() {
         return albunsLiveData;
