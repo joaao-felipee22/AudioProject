@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
+        //recuperando login
         GoogleSignInOptions gso = new GoogleSignInOptions
                 .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()//request email id
