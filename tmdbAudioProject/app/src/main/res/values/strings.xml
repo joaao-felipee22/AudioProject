@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">The AudioDB</string>
+    <string name="facebook_app_id">470631420463833</string> <string name="fb_login_protocol_scheme">fb470631420463833</string>
+
 </resources>

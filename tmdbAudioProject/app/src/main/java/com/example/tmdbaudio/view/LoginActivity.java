@@ -1,86 +1,126 @@
 package com.example.tmdbaudio.view;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
+import android.widget.Button;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.tmdbaudio.R;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.Profile;
+import com.facebook.ProfileTracker;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
+import com.google.android.material.snackbar.Snackbar;
+import com.squareup.picasso.Picasso;
+
+import java.util.Arrays;
 
 public class LoginActivity extends AppCompatActivity {
-    private SignInButton googleSignInButton;
-    private GoogleSignInClient googleSignInClient;
-    public static final String GOOGLE_ACCOUNT = "google_account";
+
+    private Button btnfacebookDefault;
+    private CallbackManager callbackManager;
+    private String fbEmail;
+    private String profileUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        onStart();
+        btnfacebookDefault = findViewById(R.id.btnLoginFacebook);
 
-        googleSignInButton = findViewById(R.id.sign_in_button);
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
+        callbackManager = CallbackManager.Factory.create();
 
-        googleSignInClient = GoogleSignIn.getClient(this, gso);
-        googleSignInButton.setOnClickListener(view -> {
-            Intent signInIntent = googleSignInClient.getSignInIntent();
-            startActivityForResult(signInIntent, 101);
+        btnfacebookDefault.setOnClickListener(v -> {
+
+            LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("email", "public_profile"));
+
+            LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                @Override
+                public void onSuccess(LoginResult loginResult) {
+                    getFacebookProfile(loginResult);
+                }
+
+                @Override
+                public void onCancel() {
+                    Snackbar.make(btnfacebookDefault, "Cancel ", Snackbar.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onError(FacebookException error) {
+                    Log.i("ERRO", error.getMessage());
+                    Snackbar.make(btnfacebookDefault, "Error \n" + error.getMessage(), Snackbar.LENGTH_LONG).show();
+                }
+            });
         });
-    }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        GoogleSignInAccount alreadyloggedAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if (alreadyloggedAccount != null) {
-            Toast.makeText(this, "Você já está logado", Toast.LENGTH_SHORT).show();
-            concluirLogin(alreadyloggedAccount);
-        } else {
-            Toast.makeText(this, "Entre em alguma conta", Toast.LENGTH_LONG).show();
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        boolean isLoggedIn = accessToken != null && !accessToken.isExpired();
+
+        if (isLoggedIn) {
+           getUserProfile();
+            Snackbar.make(btnfacebookDefault, "Usuario já logado", Snackbar.LENGTH_LONG).show();
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == Activity.RESULT_OK) {
-            switch (requestCode) {
-                case 101:
-                    try {
-                        // A tarefa retornada desta chamada é sempre concluída, sem necessidade de anexar
-                        // um ouvinte.
-                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-                        GoogleSignInAccount conta = task.getResult(ApiException.class);
-                        concluirLogin(conta);
-                    } catch (ApiException e) {
 
-                        // O código de status ApiException indica o motivo detalhado da falha.
-                        Log.i("LOG", "Error: " + e.getMessage());
-                        Toast.makeText(getApplicationContext(), "Deu merda", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-            }
-        }
-    }
-
-    private void concluirLogin(GoogleSignInAccount googleSignInAccount) {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra(GOOGLE_ACCOUNT, googleSignInAccount);
+    private void gotoHome(String email, String imagem) {
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra("EMAIL", email);
+        intent.putExtra("IMG", imagem);
         startActivity(intent);
-        finish();
+        finishActivity(64206);
     }
+
+    private void getFacebookProfile(LoginResult loginResult) {
+        GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), (result, response) -> {
+            try {
+
+                Log.i("RESAULTS : ", result.toString());
+                getUserProfile();
+
+            } catch (Exception e) {
+
+                Log.e("TAG", "Erro ao buscar profile : ", e);
+            }
+        });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "email");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void getUserProfile() {
+        ProfileTracker profileTracker = new ProfileTracker() {
+            @Override
+            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+
+                // Agora que temos o token do usuario podemos requisitar os dados
+                Profile.fetchProfileForCurrentAccessToken();
+                if (currentProfile != null) {
+                    String fbUserId = currentProfile.getId();
+                    fbEmail = currentProfile.getName();
+                    profileUrl = currentProfile.getProfilePictureUri(200, 200).toString();
+                    gotoHome(fbEmail, profileUrl);
+                }
+            }
+        };
+    }
+
 }
